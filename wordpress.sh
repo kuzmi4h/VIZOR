@@ -17,10 +17,14 @@ fi
 # Update the package list and install the dependencies
 sudo dnf update -y
 sudo dnf install -y httpd mariadb-server nginx wget tar curl
-rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
 sudo dnf install -y https://rpms.remirepo.net/enterprise/remi-release-8.rpm
-sudo dnf module reset -y php
-sudo dnf module install -y php:remi-8.3
+sudo dnf config-manager --enable remi
+sudo dnf -y update
+sudo dnf install -y php83-php php83-php-mysqlnd
+sudo systemctl enable php83-php-fpm
+sudo systemctl start php83-php-fpm
+
 
 
 # Download and extract Wordpress
@@ -57,8 +61,8 @@ sudo systemctl start nginx
 sudo systemctl enable nginx
 
 # Start php-fpm
-sudo systemctl start php-fpm
-sudo systemctl enable php-fpm
+sudo systemctl start php83-php-fpm
+sudo systemctl enable php83-php-fpm
 
 # Configure firewalld
 sudo firewall-cmd --zone=public --add-port=80/tcp --permanent
