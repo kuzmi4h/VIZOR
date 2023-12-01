@@ -17,9 +17,10 @@ fi
 # Update the package list and install the dependencies
 sudo dnf update -y
 sudo dnf install -y httpd mariadb-server nginx wget tar curl
-rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm sudo dnf install -y https://rpms.remirepo.net/enterprise/remi-release-8.rpm
-sudo dnf module reset php
-sudo dnf module install php:remi-7.4
+rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+sudo dnf install -y https://rpms.remirepo.net/enterprise/remi-release-8.rpm
+sudo dnf module reset -y php
+sudo dnf module install -y php:remi-8.3
 
 
 # Download and extract Wordpress
@@ -60,8 +61,8 @@ sudo systemctl start php-fpm
 sudo systemctl enable php-fpm
 
 # Configure firewalld
-sudo firewall-cmd --zone=public --permanent --add-service=http
-sudo firewall-cmd --zone=public --permanent --add-service=https
+sudo firewall-cmd --zone=public --add-port=80/tcp --permanent
+sudo firewall-cmd --zone=public --add-port=8080/tcp --permanent
 sudo firewall-cmd --reload
 
 # Send a notification to Telegram
