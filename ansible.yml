@@ -1,90 +1,134 @@
 ---
-- name: Install Apache2, mariadb, php, Wordpress and Nginx
+- name: Install and configure WordPress on CentOS 8
   hosts: all
-  become: yes
+  vars:
+    WP_USER: wpuser
+    WP_PASS: wppass
   tasks:
-    - name: Install Apache2
-      apt:
-        name: apache2
+    - name: Install epel-release
+      dnf:
+        name:
+          - epel-release
+
+    - name: Update the system
+      dnf:
+        name: "*"
+        state: latest
+
+    - name: Install required packages
+      dnf:
+        name:
+          - httpd
+          - mariadb-server
+          - nginx
+          - wget
+          - tar
+          - python3-mysqlclient
+          - curl
+          - https://rpms.remirepo.net/enterprise/remi-release-8.rpm
         state: present
-        update_cache: yes
-      register: apache2
-      notify: Restart Apache2
+        disable_gpg_check: yes
 
-    - name: Install mariadb
-      apt:
-        name: mariadb-server
+    - name: Enable remi repository
+      dnf:
+        enablerepo: remi
+        update_cache: yes
+
+    - name: Install PHP 8.3 and MySQL module
+      dnf:
+        name:
+          - php83-php
+          - php83-php-mysqlnd
         state: present
-        update_cache: yes
-      register: mariadb
-      notify: Restart mariadb
 
-    - name: Install php
-      apt:
-        name: "{{ item }}"
-        state: present
-        update_cache: yes
-      loop:
-        - php
-        - php-mysql
-        - php-curl
-        - php-gd
-        - php-mbstring
-        - php-xml
-        - php-xmlrpc
-        - php-soap
-        - php-intl
-      register: php
-      notify: Restart Apache2
-
-    - name: Install Wordpress
-      unarchive:
-        src: https://wordpress.org/latest.tar.gz
-        dest: /var/www/html
-        remote_src: yes
-      register: wordpress
-
-    - name: Configure Wordpress
-      template:
-        src: wp-config.php.j2
-        dest: /var/www/html/wordpress/wp-config.php
-      vars:
-        db_name: wordpress
-        db_user: wordpress
-        db_password: wordpress
-        db_host: localhost
-      register: wp_config
-
-    - name: Install Nginx
-      apt:
-        name: nginx
-        state: present
-        update_cache: yes
-      register: nginx
-      notify: Restart Nginx
-
-    - name: Configure Nginx
-      template:
-        src: nginx.conf.j2
-        dest: /etc/nginx/sites-available/default
-      vars:
-        server_name: example.com
-        proxy_pass: http://localhost:80
-      register: nginx_config
-      notify: Restart Nginx
-
-  handlers:
-    - name: Restart Apache2
+    - name: Enable and start PHP-FPM service
       service:
-        name: apache2
-        state: restarted
+        name: php83-php-fpm
+        enabled: yes
+        state: started
 
-    - name: Restart mariadb
+    - name: Download WordPress
+      get_url:
+        url: https://wordpress.org/latest.tar.gz
+        dest: /tmp/latest.tar.gz
+
+    - name: Extract WordPress
+      unarchive:
+        src: /tmp/latest.tar.gz
+        dest: /var/www/html/
+        remote_src: yes
+
+    - name: Enable and start MariaDB service
       service:
         name: mariadb
-        state: restarted
+        enabled: yes
+        state: started
 
-    - name: Restart Nginx
+    - name: Create WordPress database
+      mysql_db:
+        name: wordpress
+        state: present
+
+    - name: Create WordPress user
+      mysql_user:
+        name: "wpuser"
+        password: "wppass"
+        priv: "wordpress.*:ALL"
+        state: present
+
+    - name: Download wp-config.php file
+      get_url:
+        url: https://raw.githubusercontent.com/kuzmi4h/VIZOR/main/wp-config.php
+        dest: /var/www/html/wp-config.php
+
+    - name: Backup httpd.conf file
+      copy:
+        src: /etc/httpd/conf/httpd.conf
+        dest: /etc/httpd/conf/httpd.conf.bak
+        remote_src: yes
+
+    - name: Download httpd.conf file
+      get_url:
+        url: https://raw.githubusercontent.com/kuzmi4h/VIZOR/main/httpd.conf
+        dest: /etc/httpd/conf/httpd.conf
+
+    - name: Set ownership and permissions for WordPress files
+      file:
+        path: /var/www/html/
+        owner: apache
+        group: apache
+        mode: 0755
+        recurse: yes
+
+    - name: Enable and start httpd service
+      service:
+        name: httpd
+        enabled: yes
+        state: started
+
+    - name: Backup nginx.conf file
+      copy:
+        src: /etc/nginx/nginx.conf
+        dest: /etc/nginx/nginx.conf.bak
+        remote_src: yes
+
+    - name: Download nginx.conf file
+      get_url:
+        url: https://raw.githubusercontent.com/kuzmi4h/VIZOR/main/nginx.conf
+        dest: /etc/nginx/nginx.conf
+
+    - name: Enable and start nginx service
       service:
         name: nginx
-        state: restarted
+        enabled: yes
+        state: started
+
+    - name: Open ports 80 and 8080 in firewall
+      firewalld:
+        port: "{{ item }}"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop:
+        - 80/tcp
+        - 8080/tcp
