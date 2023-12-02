@@ -1,0 +1,90 @@
+---
+- name: Install Apache2, mariadb, php, Wordpress and Nginx
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Apache2
+      apt:
+        name: apache2
+        state: present
+        update_cache: yes
+      register: apache2
+      notify: Restart Apache2
+
+    - name: Install mariadb
+      apt:
+        name: mariadb-server
+        state: present
+        update_cache: yes
+      register: mariadb
+      notify: Restart mariadb
+
+    - name: Install php
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - php
+        - php-mysql
+        - php-curl
+        - php-gd
+        - php-mbstring
+        - php-xml
+        - php-xmlrpc
+        - php-soap
+        - php-intl
+      register: php
+      notify: Restart Apache2
+
+    - name: Install Wordpress
+      unarchive:
+        src: https://wordpress.org/latest.tar.gz
+        dest: /var/www/html
+        remote_src: yes
+      register: wordpress
+
+    - name: Configure Wordpress
+      template:
+        src: wp-config.php.j2
+        dest: /var/www/html/wordpress/wp-config.php
+      vars:
+        db_name: wordpress
+        db_user: wordpress
+        db_password: wordpress
+        db_host: localhost
+      register: wp_config
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+      register: nginx
+      notify: Restart Nginx
+
+    - name: Configure Nginx
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/default
+      vars:
+        server_name: example.com
+        proxy_pass: http://localhost:80
+      register: nginx_config
+      notify: Restart Nginx
+
+  handlers:
+    - name: Restart Apache2
+      service:
+        name: apache2
+        state: restarted
+
+    - name: Restart mariadb
+      service:
+        name: mariadb
+        state: restarted
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
