@@ -1,0 +1,8 @@
+dnf install epel-release
+dnf update -y
+dnf install -y wget
+wget https://raw.githubusercontent.com/kuzmi4h/VIZOR/main/docker/docker-alma9.sh
+wget https://raw.githubusercontent.com/kuzmi4h/VIZOR/main/docker/docker-compose.yml
+chmod +x docker-alma9.sh
+./docker-alma9.sh
+docker-compose up -d
