@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Set the API token and chat ID for Telegram
 API_TOKEN="846485825:AAFkWzlS4g1z97bbAn_4LhbH0bJy81TU-w4"
 CHAT_ID="362655759"
