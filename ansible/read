@@ -1,3 +1,11 @@
-ansible-playbook -i host absible.yml -v
--v выводить статус в консоль
-В файле host ip адреса хостов на которые необходимо установить LAMP стек
+dnf update -y
+dnf install -y epel-release
+dnf install -y wget ansible
+wget https://raw.githubusercontent.com/kuzmi4h/VIZOR/main/ansible/ansible.yml
+ssh-keygen -t rsa
+ssh-copy-id root@192.168.10.143
+#сервер на который будет устонавливаться Wordpress 
+vi host 
+# добавить ip адрес 
+ansible-playbook -i host ansible.yml -v
+# -v выводить статус в консоль выполнения. 
