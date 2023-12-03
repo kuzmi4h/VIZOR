@@ -1,0 +1,6 @@
+Almalinux 8.9
+
+####
+dnf install -y wget
+chmod +x wordpress.sh
+./wordpress.sh
