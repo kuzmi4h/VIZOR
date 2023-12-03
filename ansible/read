@@ -1,0 +1,3 @@
+ansible-playbook -i host absible.yml -v
+-v выводить статус в консоль
+В файле host ip адреса хостов на которые необходимо установить LAMP стек
