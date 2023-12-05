@@ -2,5 +2,6 @@ Almalinux 8.9
 
 ####
 dnf install -y wget
+wget https://raw.githubusercontent.com/kuzmi4h/VIZOR/main/bash/wordpress.sh
 chmod +x wordpress.sh
 ./wordpress.sh
