@@ -123,12 +123,15 @@
         enabled: yes
         state: started
 
-    - name: Open ports 80 and 8080 in firewall
+    - name: Open ports 80 in firewall
       firewalld:
-        port: "{{ item }}"
+        port:
+        - 80/tcp
         permanent: yes
         state: enabled
         immediate: yes
-      loop:
-        - 80/tcp
-        - 8080/tcp
+    - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+      ansible.posix.seboolean:
+        name: httpd_can_network_connect
+        state: true
+        persistent: true
