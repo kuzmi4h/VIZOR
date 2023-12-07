@@ -75,8 +75,10 @@ sudo systemctl enable php83-php-fpm
 
 # Configure firewalld
 sudo firewall-cmd --zone=public --add-port=80/tcp --permanent
-sudo firewall-cmd --zone=public --add-port=8080/tcp --permanent
 sudo firewall-cmd --reload
+
+# Configure selinux
+setsebool -P httpd_can_network_connect 1
 
 # Send a notification to Telegram
 MESSAGE="The script has been executed successfully."
